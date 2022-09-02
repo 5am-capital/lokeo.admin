@@ -39,6 +39,7 @@ export const useOrganizationStore = defineStore({
     async getEditedOrganization(id) {
       const {data} = await http.get(`/organizations/${id}`)
       this.editedOrganization = data;
+      console.log("getEditedOrganization")
     },
 
     async createEntity(dto) {

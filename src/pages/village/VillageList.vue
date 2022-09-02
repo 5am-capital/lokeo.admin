@@ -33,7 +33,8 @@ const entities = computed(() => {
         align: 'left',
         field: row => row.name,
         format: val => `${val}`,
-      }
+      },
+      { name: 'landsCount', align: 'left', label: 'Участки', field: row => row.landsCount },
     ],
     rows: toRaw(villageStore.entities)
   }

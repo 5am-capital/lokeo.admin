@@ -80,26 +80,26 @@
             <div v-if="organizationDto.contacts.length > 1">
               <div class="text-h6">Доп. контактные данные</div>
               <div v-for="(item, index) in organizationDto.contacts.slice(1)" :key="item.index">
-                <q-checkbox v-model="organizationDto.contacts[index].makeAsMain"
+                <q-checkbox v-model="organizationDto.contacts[index + 1].makeAsMain"
                             label="Сделать основными данными"/>
                 <q-input outlined
-                         v-model="organizationDto.contacts[index].phoneNumber"
+                         v-model="organizationDto.contacts[index + 1].phoneNumber"
                          label="Номер телефона"
                          mask="# (###) ### ####"/>
                 <q-input outlined
-                         v-model="organizationDto.contacts[index].email"
+                         v-model="organizationDto.contacts[index + 1].email"
                          label="Email"/>
                 <q-input outlined
-                         v-model="organizationDto.contacts[index].site"
+                         v-model="organizationDto.contacts[index + 1].site"
                          label="Сайт"/>
                 <q-input outlined
-                         v-model="organizationDto.contacts[index].address"
+                         v-model="organizationDto.contacts[index + 1].address"
                          label="Адрес офиса"/>
               </div>
             </div>
 
           </div>
-          <q-btn color="primary" icon="add" @click="addContacts"></q-btn>
+          <q-btn color="primary" icon="add" @click="addContacts(false)"></q-btn>
           <q-btn v-if="organizationDto.contacts.length > 1" color="primary" icon="remove" @click="removeContacts"></q-btn>
         </q-expansion-item>
       </div>
@@ -138,31 +138,31 @@
               <div class="text-h6">Доп. банковские реквизиты</div>
               <div v-for="(item, index) in organizationDto.requisites.slice(1)" :key="item.index">
                 <div class="col q-gutter-sm">
-                  <q-checkbox v-model="organizationDto.requisites[index].makeAsMain"
+                  <q-checkbox v-model="organizationDto.requisites[index + 1].makeAsMain"
                               label="Сделать основными реквизитами"/>
-                  <q-checkbox v-model="organizationDto.requisites[index].isInternetAcquiringAccount"
+                  <q-checkbox v-model="organizationDto.requisites[index + 1].isInternetAcquiringAccount"
                               label="Счет интернет-эквайринга"/>
                 </div>
                 <q-input outlined
-                         v-model="organizationDto.requisites[index].checkingAccount"
+                         v-model="organizationDto.requisites[index + 1].checkingAccount"
                          label="Номер расчетного счета"/>
                 <q-input outlined
-                         v-model="organizationDto.requisites[index].correspondentAccount"
+                         v-model="organizationDto.requisites[index + 1].correspondentAccount"
                          label="Корреспондентский счет"/>
                 <q-input outlined
-                         v-model="organizationDto.requisites[index].bankName"
+                         v-model="organizationDto.requisites[index + 1].bankName"
                          label="Название банка"/>
                 <q-input outlined
-                         v-model="organizationDto.requisites[index].bankKpp"
+                         v-model="organizationDto.requisites[index + 1].bankKpp"
                          label="КПП банка"/>
                 <q-input outlined
-                         v-model="organizationDto.requisites[index].bankBik"
+                         v-model="organizationDto.requisites[index + 1].bankBik"
                          label="БИК банка"/>
               </div>
             </div>
 
           </div>
-          <q-btn color="primary" icon="add" @click="addRequisites"></q-btn>
+          <q-btn color="primary" icon="add" @click="addRequisites(false)"></q-btn>
           <q-btn v-if="organizationDto.requisites.length > 1" color="primary" icon="remove" @click="removeRequisites"></q-btn>
         </q-expansion-item>
       </div>
@@ -175,7 +175,7 @@
 <script setup>
 import {useRouter} from "vue-router";
 import { useOrganizationStore } from "stores/organizationStore";
-import { onMounted, ref } from "vue";
+import { onMounted, ref, toRaw } from "vue";
 import { getLegalTypeOptions } from "composition/options/getLegalTypeOptions";
 
 const router = useRouter()
@@ -211,38 +211,44 @@ const organizationDto = ref({
     directorName: null,
     accounterName: null,
   },
-  contacts: [getNewContacts()],
-  requisites: [getNewRequisites()]
+  contacts: [getNewContacts(true)],
+  requisites: [getNewRequisites(true)]
 })
 
 async function createNewEntity() {
-  const dto = organizationDto.value;
+  const dto = toRaw(organizationDto.value);
+  if(!hasRequisites.value) dto.requisites = null
+  if(!hasContacts.value) dto.contacts = null
+
+  dto.commonData.legalType = organizationDto.value.commonData.legalType.value
+
   await organizationStore.createEntity(dto)
   await router.push('organizationList')
 }
 
-function addContacts() {
-  organizationDto.value.contacts.push(getNewContacts())
+function addContacts(isMain = false) {
+  organizationDto.value.contacts.push(getNewContacts(isMain))
 }
 function removeContacts() {
   if(organizationDto.value.contacts.length === 1) return;
-  organizationDto.value.contacts = organizationDto.value.contacts.slice(1);
+  organizationDto.value.contacts.splice(-1);
 }
 
-function addRequisites() {
-  organizationDto.value.requisites.push(getNewRequisites())
+function addRequisites(isMain = false) {
+  organizationDto.value.requisites.push(getNewRequisites(isMain))
 }
 function removeRequisites() {
   if(organizationDto.value.requisites.length === 1) return;
-  organizationDto.value.requisites = organizationDto.value.requisites.slice(1);
+  organizationDto.value.requisites.splice(-1);
 }
 
-function getNewContacts() {
+function getNewContacts(isMain = false) {
+  console.log(isMain)
   return {
     //Локальный индекс, бэк его будет не учитывать
     index: ++contactsCount.value,
     id: null,
-    isMain: true,
+    isMain: isMain,
     makeAsMain: false,
     phoneNumber: null,
     email: null,
@@ -251,12 +257,12 @@ function getNewContacts() {
   }
 }
 
-function getNewRequisites() {
+function getNewRequisites(isMain = false) {
   return {
     //Локальный индекс, бэк его будет не учитывать
     index: ++requisitesCount.value,
     id: null,
-    isMain: true,
+    isMain: isMain,
     makeAsMain: false,
     isInternetAcquiringAccount: false,
     checkingAccount: null,
@@ -270,13 +276,39 @@ function getNewRequisites() {
 onMounted(async () => {
   console.log(organizationStore.editedOrganization)
   if(organizationStore.editedOrganization) {
-    Object.keys(organizationDto.value).forEach(field => organizationDto.value[field] = organizationStore.editedOrganization[field])
+     Object.keys(organizationDto.value).forEach(field =>
+       organizationStore.editedOrganization[field]
+         ? organizationDto.value[field] = organizationStore.editedOrganization[field]
+         : organizationDto.value[field]
+     )
+     if(organizationStore.editedOrganization.commonData) {
+       const legalTypes = getLegalTypeOptions()
+       const legalType = legalTypes.find(q => q.value === organizationStore.editedOrganization.commonData.legalType)
+       organizationDto.value.commonData.legalType = legalType
+     }
 
-    if(organizationStore.editedOrganization.contacts) {
+    if(organizationStore.editedOrganization.contacts && organizationStore.editedOrganization.contacts.length > 0) {
+      hasContacts.value = true
+      hasContactsExpanded.value = true
       organizationDto.value.contacts = organizationStore.editedOrganization.contacts
+      organizationDto.value.contacts.sort((a, b) => a.isMain === true ? -1 : 1)
+      contactsCount.value = organizationDto.value.contacts.length
+    } else {
+      hasContacts.value = false
+      hasContactsExpanded.value = false
+      addContacts(true)
     }
-    if(organizationStore.editedOrganization.requisites) {
+
+    if(organizationStore.editedOrganization.requisites && organizationStore.editedOrganization.requisites.length > 0) {
+      hasRequisites.value = true
+      hasRequisitesExpanded.value = true
       organizationDto.value.requisites = organizationStore.editedOrganization.requisites
+      organizationDto.value.requisites.sort((a, b) => a.isMain === true ? -1 : 1)
+      requisitesCount.value = organizationDto.value.requisites.length
+    } else {
+      hasRequisites.value = false
+      hasRequisitesExpanded.value = false
+      addRequisites(true)
     }
   }
 })
