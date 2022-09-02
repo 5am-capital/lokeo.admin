@@ -105,7 +105,68 @@
       </div>
     </div>
 
+    <div>
+      <div class="row items-start">
+        <div>
+          <q-toggle v-model="hasRequisites"></q-toggle>
+        </div>
+        <q-expansion-item
+          label="Банковские реквизиты"
+          v-model="hasRequisitesExpanded">
 
+          <div class="col q-gutter-sm">
+            <div class="text-h6">Основные банковские реквизиты</div>
+            <q-checkbox v-model="organizationDto.requisites[0].isInternetAcquiringAccount"
+                        label="Счет интернет-эквайринга"/>
+            <q-input outlined
+                     v-model="organizationDto.requisites[0].checkingAccount"
+                     label="Номер расчетного счета"/>
+            <q-input outlined
+                     v-model="organizationDto.requisites[0].correspondentAccount"
+                     label="Корреспондентский счет"/>
+            <q-input outlined
+                     v-model="organizationDto.requisites[0].bankName"
+                     label="Название банка"/>
+            <q-input outlined
+                     v-model="organizationDto.requisites[0].bankKpp"
+                     label="КПП банка"/>
+            <q-input outlined
+                     v-model="organizationDto.requisites[0].bankBik"
+                     label="БИК банка"/>
+
+            <div v-if="organizationDto.requisites.length > 1">
+              <div class="text-h6">Доп. банковские реквизиты</div>
+              <div v-for="(item, index) in organizationDto.requisites.slice(1)" :key="item.index">
+                <div class="col q-gutter-sm">
+                  <q-checkbox v-model="organizationDto.requisites[index].makeAsMain"
+                              label="Сделать основными реквизитами"/>
+                  <q-checkbox v-model="organizationDto.requisites[index].isInternetAcquiringAccount"
+                              label="Счет интернет-эквайринга"/>
+                </div>
+                <q-input outlined
+                         v-model="organizationDto.requisites[index].checkingAccount"
+                         label="Номер расчетного счета"/>
+                <q-input outlined
+                         v-model="organizationDto.requisites[index].correspondentAccount"
+                         label="Корреспондентский счет"/>
+                <q-input outlined
+                         v-model="organizationDto.requisites[index].bankName"
+                         label="Название банка"/>
+                <q-input outlined
+                         v-model="organizationDto.requisites[index].bankKpp"
+                         label="КПП банка"/>
+                <q-input outlined
+                         v-model="organizationDto.requisites[index].bankBik"
+                         label="БИК банка"/>
+              </div>
+            </div>
+
+          </div>
+          <q-btn color="primary" icon="add" @click="addRequisites"></q-btn>
+          <q-btn v-if="organizationDto.requisites.length > 1" color="primary" icon="remove" @click="removeRequisites"></q-btn>
+        </q-expansion-item>
+      </div>
+    </div>
 
     <q-btn color="primary" @click="createNewEntity">Сохранить</q-btn>
   </q-page>
@@ -125,9 +186,12 @@ const legalTypeOptions = getLegalTypeOptions()
 const hasContacts = ref(false)
 const hasContactsExpanded = ref()
 
+const hasRequisites = ref(false)
+const hasRequisitesExpanded = ref()
 
 const contactsCount = ref(0)
 const requisitesCount = ref(0)
+
 const organizationDto = ref({
   id: null,
   name: null,
@@ -163,6 +227,14 @@ function addContacts() {
 function removeContacts() {
   if(organizationDto.value.contacts.length === 1) return;
   organizationDto.value.contacts = organizationDto.value.contacts.slice(1);
+}
+
+function addRequisites() {
+  organizationDto.value.requisites.push(getNewRequisites())
+}
+function removeRequisites() {
+  if(organizationDto.value.requisites.length === 1) return;
+  organizationDto.value.requisites = organizationDto.value.requisites.slice(1);
 }
 
 function getNewContacts() {
